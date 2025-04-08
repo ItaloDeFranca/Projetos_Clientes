@@ -88,7 +88,7 @@ def generate():
     image_url = data.get("image_url")
 
     if not text or not image_url:
-        return {"error": "'text' and 'image_url' are required."}, 400
+        return {"error": "'text' and 'image_url' are required."}, 401
 
     try:
         image_response = requests.get(image_url)
