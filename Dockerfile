@@ -1,10 +1,10 @@
-# Usa uma imagem base oficial do Python
-FROM python:3.12-slim-bookworm AS builder
+# Usa imagem leve com Python
+FROM python:3.12-slim-bookworm
 
-# Define o diretório de trabalho
+# Cria diretório de trabalho
 WORKDIR /app
 
-# Instala as dependências do sistema necessárias para Pillow e fontes
+# Instala dependências de sistema necessárias pro Pillow + fontes
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     build-essential \
@@ -13,23 +13,20 @@ RUN apt-get update && \
     libfreetype6-dev \
     libpng-dev \
     fonts-dejavu-core \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia o requirements.txt
+# Copia requirements.txt e instala dependências Python
 COPY requirements.txt .
-
-# Instala as dependências Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o restante da aplicação
+# Copia tudo (inclusive /app/app.py e images)
 COPY . .
 
-# Define variáveis de ambiente (se precisar para rodar Flask, mas nesse caso tá rodando direto com app.py)
+# Seta variável pra evitar buffer no log
 ENV PYTHONUNBUFFERED=1
 
-# Porta (caso queira explicitar, mas o Waitress já roda em 0.0.0.0:5050)
+# Expõe a porta usada no app
 EXPOSE 5050
 
-# Comando para iniciar a aplicação
+# Comando de start (o app.py tá dentro da pasta /app)
 CMD ["python", "app/app.py"]
