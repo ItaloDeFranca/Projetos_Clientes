@@ -2,3 +2,4 @@ flask
 Flask
 Pillow
 requests
+waitress
