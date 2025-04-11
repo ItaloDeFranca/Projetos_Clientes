@@ -97,7 +97,7 @@ def generate():
     except Exception as e:
         return {"error": f"Failed to download image: {str(e)}"}, 400
 
-    output_img = render_template_with_text_and_image("Ney Italo de França - Post Twitter.png", text, image_response.content)
+    output_img = render_template_with_text_and_image("images/Ney Italo de França - Post Twitter.png", text, image_response.content)
     return send_file(output_img, mimetype='image/jpeg')
 
 
@@ -105,4 +105,4 @@ def generate():
 if __name__ == "__main__":
     from waitress import serve
     print("Rodando em modo produção com Waitress...")
-    serve(app, host="0.0.0.0", port=5000)
+    serve(app, host="0.0.0.0", port=5050)
