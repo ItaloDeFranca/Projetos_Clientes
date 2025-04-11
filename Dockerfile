@@ -1,33 +1,31 @@
-# Use uma imagem base oficial do Python com Alpine Linux
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm
 
-
-# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Instala as dependências do sistema
+# Instala dependências do sistema
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     build-essential \
     libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Copia o arquivo requirements.txt para o container
+# Cria o usuário não-root
+RUN useradd -m appuser
+
+# Copia requirements e instala dependências
 COPY requirements.txt ./
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Instala o uv e as dependências do requirements.txt
-RUN pip install uv
-RUN uv pip install --no-cache-dir -r requirements.txt
-
-# Copia o restante dos arquivos da aplicação
+# Copia os arquivos da aplicação
 COPY . .
 
-# Define as variáveis de ambiente
+# Define variáveis de ambiente
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
-# Define o usuário não root para executar a aplicação
+# Troca para usuário não-root
 USER appuser
 
-# Define o comando para executar a aplicação
-CMD ["python", "-m", "flask", "run"]
+# Comando para iniciar a aplicação
+CMD ["flask", "run"]
