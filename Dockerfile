@@ -1,35 +1,35 @@
-FROM python:3.12-slim-bookworm
+# Usa uma imagem base oficial do Python
+FROM python:3.12-slim-bookworm AS builder
 
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Instala as libs necessárias pro Pillow
+# Instala as dependências do sistema necessárias para Pillow e fontes
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     build-essential \
     libjpeg-dev \
     zlib1g-dev \
     libfreetype6-dev \
-    libpng-dev && \
-    rm -rf /var/lib/apt/lists/*
+    libpng-dev \
+    fonts-dejavu-core \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Cria usuário não-root
-RUN useradd -m appuser
+# Copia o requirements.txt
+COPY requirements.txt .
 
-# Copia os arquivos
-COPY requirements.txt ./
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Instala as dependências Python
+RUN pip install --no-cache-dir -r requirements.txt
 
+# Copia o restante da aplicação
 COPY . .
 
-# Define variáveis
-ENV FLASK_APP=app/app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=5050
+# Define variáveis de ambiente (se precisar para rodar Flask, mas nesse caso tá rodando direto com app.py)
+ENV PYTHONUNBUFFERED=1
 
+# Porta (caso queira explicitar, mas o Waitress já roda em 0.0.0.0:5050)
 EXPOSE 5050
 
-USER appuser
-
-# Corrigido: aponta pro app.py dentro da pasta /app/app
+# Comando para iniciar a aplicação
 CMD ["python", "app/app.py"]
