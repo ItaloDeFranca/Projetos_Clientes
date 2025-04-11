@@ -2,36 +2,37 @@ FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-# Instala dependências do sistema
+# Instala as libs necessárias pro Pillow funcionar corretamente
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     build-essential \
-    libpq-dev \
     libjpeg-dev \
+    zlib1g-dev \
     libfreetype6-dev \
-    libpng-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libpng-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Cria o usuário não-root
+# Cria usuário não-root
 RUN useradd -m appuser
 
-# Copia os arquivos da aplicação
+# Copia dependências
 COPY requirements.txt ./
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Copia o código
 COPY . .
 
-# Define variáveis de ambiente
+# Define variáveis do Flask (por precaução)
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=5050
 
-# Troca para usuário não-root
-USER appuser
-
-# Expõe a porta usada pela app
+# Expõe a porta usada no app
 EXPOSE 5050
 
-# Comando para rodar com waitress (modo produção)
+# Usa usuário seguro
+USER appuser
+
+# Roda o app com waitress (modo produção)
 CMD ["python", "app.py"]
