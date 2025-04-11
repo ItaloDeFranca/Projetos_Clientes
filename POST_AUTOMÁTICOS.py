@@ -1,11 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import textwrap
 import os
-import io
-import requests
-from flask import Flask, request, send_file, jsonify
-
-app = Flask(__name__)
 
 def draw_text_with_wrapping(draw, text, font, max_width, x, y, max_height, line_spacing=10):
     lines = []
@@ -31,12 +26,12 @@ def draw_text_with_wrapping(draw, text, font, max_width, x, y, max_height, line_
         y += line_height + line_spacing
     return y
 
-def add_rounded_image_fixed(base_img, add_img, box, radius=30):
+def add_rounded_image_fixed(base_img, add_img_path, box, radius=30):
     x0, y0, x1, y1 = box
     target_width = x1 - x0
     target_height = y1 - y0
 
-    add_img = add_img.convert("RGBA")
+    add_img = Image.open(add_img_path).convert("RGBA")
     add_img = add_img.resize((target_width, target_height))
 
     mask = Image.new('L', (target_width, target_height), 0)
@@ -47,10 +42,14 @@ def add_rounded_image_fixed(base_img, add_img, box, radius=30):
     base_img.paste(add_img, (x0, y0), mask=add_img)
     return base_img
 
-def render_template_with_text_and_image(template_path, user_text, add_img_data, font_path="arial.ttf", font_size=32):
+def render_template_with_text_and_image(
+    template_path, output_path, user_text, image_to_add_path,
+    font_path=None, font_size=32):
+
     base = Image.open(template_path).convert("RGB")
     draw = ImageDraw.Draw(base)
-    font = ImageFont.truetype(font_path, font_size)
+
+    font = ImageFont.truetype(font_path or "arial.ttf", font_size)
 
     # Regiões fixas do template
     text_x0, text_y0 = 115, 325
@@ -61,44 +60,26 @@ def render_template_with_text_and_image(template_path, user_text, add_img_data, 
     max_text_width = text_x1 - text_x0
     max_text_height = text_y1 - text_y0
 
-    draw_text_with_wrapping(
+    final_text_bottom = draw_text_with_wrapping(
         draw, user_text, font, max_text_width, text_x0, text_y0, max_height=text_y1
     )
 
-    add_img = Image.open(io.BytesIO(add_img_data))
     image_box = (image_x0, image_y0, image_x1, image_y1)
-    base = add_rounded_image_fixed(base, add_img, image_box)
-
-    output_buffer = io.BytesIO()
-    base.save(output_buffer, format="JPEG")
-    output_buffer.seek(0)
-    return output_buffer
-
-@app.route("/")
-def home():
-    return jsonify({
-        "message": "Servidor Flask ativo! Use POST em /generate com JSON para gerar conteúdo."
-    })
+    base = add_rounded_image_fixed(base, image_to_add_path, image_box)
+    base.save(output_path)
 
 
-@app.route("/generate", methods=["GET"])
-def generate():
-    data = request.json
-    text = data.get("text")
-    image_url = data.get("image_url")
 
-    if not text or not image_url:
-        return {"error": "'text' and 'image_url' are required."}, 400
-
-    try:
-        image_response = requests.get(image_url)
-        image_response.raise_for_status()
-    except Exception as e:
-        return {"error": f"Failed to download image: {str(e)}"}, 400
-
-    output_img = render_template_with_text_and_image("Ney Italo de França - Post Twitter.png", text, image_response.content)
-    return send_file(output_img, mimetype='image/jpeg')
-
-
+# EXEMPLO DE USO
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    render_template_with_text_and_image(
+        template_path=r"C:\Users\Seals\Desktop\Ney Italo de França - Post Twitter.png",           # Caminho do template
+        output_path="saida_final.jpg",          # Saída final
+        user_text="""A Inteligência Artificial (IA) está transformando profundamente a maneira como vivemos, trabalhamos e nos relacionamos. Ao automatizar tarefas repetitivas e analisar grandes volumes de dados em tempo real, a IA permite decisões mais rápidas e precisas. 
+Seus impactos positivos são vastos: na medicina, auxilia no diagnóstico precoce de doenças; na educação, personaliza o aprendizado; na indústria, otimiza processos; e no cotidiano, torna serviços mais acessíveis e eficientes.
+Mais do que uma ferramenta, a IA representa uma extensão da capacidade humana — um aliado poderoso na construção de um futuro mais inteligente, ético e sustentável.
+""",
+        image_to_add_path=r"C:\Users\Seals\Desktop\Home.png",  # Caminho para imagem representativa"
+        font_path="arial.ttf",
+        font_size=36
+    )
