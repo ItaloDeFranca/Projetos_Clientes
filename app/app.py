@@ -48,7 +48,7 @@ def add_rounded_image_fixed(base_img, add_img, box, radius=30):
     base_img.paste(add_img, (x0, y0), mask=add_img)
     return base_img
 
-def render_template_with_text_and_image(template_path, user_text, add_img_data, font_path="arial.ttf", font_size=32):
+def render_template_with_text_and_image(template_path, user_text, add_img_data, font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size=32):
     base = Image.open(template_path).convert("RGB")
     draw = ImageDraw.Draw(base)
     font = ImageFont.truetype(font_path, font_size)
@@ -97,7 +97,7 @@ def generate():
     except Exception as e:
         return {"error": f"Failed to download image: {str(e)}"}, 400
 
-    output_img = render_template_with_text_and_image("images/Ney Italo de França - Post Twitter.png", text, image_response.content)
+    output_img = render_template_with_text_and_image("https://res.cloudinary.com/djyj70lsj/image/upload/v1744423478/q0kabmmfpp4o7cn3rwqv.png", text, image_response.content)
     return send_file(output_img, mimetype='image/jpeg')
 
 
